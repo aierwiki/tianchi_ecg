@@ -289,7 +289,7 @@ def train():
 	stopping = keras.callbacks.EarlyStopping(patience = 8)
 	reduce_lr = keras.callbacks.ReduceLROnPlateau(factor = 0.1, patience = 2, min_lr = 0.001 * 0.001)
 	checkpointer = keras.callbacks.ModelCheckpoint(
-		filepath="/New_User/julyedu_471425/pickle/model/ecg.model",
+		filepath=os.path.join(MODEL_SAVE_PATH, 'ecg.model'),
 		save_best_only=False)
 	
 	hist = model.fit([X_train, X_age_train, X_gender_train], y_train, batch_size = 32, epochs = 50, shuffle = True, 
