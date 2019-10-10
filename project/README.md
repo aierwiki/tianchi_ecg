@@ -2,6 +2,26 @@
 * 内存：110G
 * 显存：16G
 * 磁盘：20G
+* python 版本：3.6.6
+* python package : 
+  - scikit-learn            0.19.2
+  - tensorboard             1.8.0
+  - tensorflow              1.9.0
+  - tensorflow-gpu          1.8.0
+  - Keras                   2.2.1
+  - Keras-Applications      1.0.4
+  - numpy                   1.16.0
+  - pandas                  0.25.1
+ * CUDA Version : 9.0.176
+ * CUDNN Version:
+```
+  -bash-4.2$ cat /usr/local/cuda/include/cudnn.h | grep CUDNN_MAJOR -A 2
+  #define CUDNN_MAJOR 7
+  #define CUDNN_MINOR 2
+  #define CUDNN_PATCHLEVEL 1
+  --
+  #define CUDNN_VERSION (CUDNN_MAJOR * 1000 + CUDNN_MINOR * 100 + CUDNN_PATCHLEVEL)
+```
 
 ## 模型
 模型采用resnet和densenet融合的方式，具体结构请查看net.info
