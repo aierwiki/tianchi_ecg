@@ -110,10 +110,10 @@ def get_train_data_from_label_eeg(df_eeg_label, test_flag = False):
 def load_train_data():
 	df_eeg_label, df_arrythmia = load_data(ARRYTHMIA_FILE_PATH, LABEL_FILE_PATH, ECG_FILE_PATH)	
 	X, X_age, X_gender, y = get_train_data_from_label_eeg(df_eeg_label)	
-	np.save(os.path.join(MODEL_SAVE_PATH, 'X.npy'), X)
-	np.save(os.path.join(MODEL_SAVE_PATH, 'X_age.npy'), X_age)
-	np.save(os.path.join(MODEL_SAVE_PATH, 'X_gender.npy'), X_gender)
-	np.save(os.path.join(MODEL_SAVE_PATH, 'y.npy'), y)
+	#np.save(os.path.join(MODEL_SAVE_PATH, 'X.npy'), X)
+	#np.save(os.path.join(MODEL_SAVE_PATH, 'X_age.npy'), X_age)
+	#np.save(os.path.join(MODEL_SAVE_PATH, 'X_gender.npy'), X_gender)
+	#np.save(os.path.join(MODEL_SAVE_PATH, 'y.npy'), y)
 	return X, X_age, X_gender, y
 
 
@@ -159,6 +159,28 @@ def resnet_block(layer, num_filters, subsample_length, block_index, conv_increas
 	return layer
 
 
+def densenet_block(layer, num_filters, subsample_length, block_index, zero_pad):
+	shortcut = MaxPooling1D(pool_size = subsample_length)(layer)
+	if zero_pad is True:
+		shortcut = Lambda(zeropad, output_shape = zeropad_output_shape)(shortcut)
+		
+	layer = Conv1D(filters = num_filters, kernel_size = 16, strides = subsample_length,
+					  padding = 'same',
+					  kernel_initializer = 'he_normal')(layer)
+	layer = BatchNormalization()(layer)
+	layer = Activation('relu')(layer)
+	layer = Dropout(0.2)(layer)
+	layer = Conv1D(filters = num_filters, kernel_size = 16, strides = 1,
+					  padding = 'same',
+					  kernel_initializer = 'he_normal')(layer)
+	layer = keras.layers.concatenate([shortcut, layer])
+	
+	# transition
+	layer = BatchNormalization()(layer)
+	layer = Conv1D(filters = num_filters, kernel_size = 1, strides = 1)(layer)
+	return layer
+
+
 def calc_recall_score(y_true, y_pred):
 	true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
 	possible_positives = K.sum(K.round(K.clip(y_true, 0, 1)))
@@ -190,8 +212,23 @@ def get_focal_loss(alpha = 0.25, gamma = 2):
 def build_model():
 	inputs = Input(shape = [5120, 8], dtype = 'float32', name = 'inputs')
 	
-	# add resnet layer
+	# add densenet layer
 	layer = Conv1D(filters = 32, kernel_size = 16, strides = 1, padding = 'same', kernel_initializer = 'he_normal')(inputs)
+	layer = BatchNormalization()(layer)
+	layer = Activation('relu')(layer)
+	
+	conv_subsample_lengths = [1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2]
+	for index, subsample_length in enumerate(conv_subsample_lengths):
+		num_filters = 2 ** (index // 4) * 32
+		layer = densenet_block(layer, num_filters, subsample_length, index, (index > 0) and (index % 4 == 0))
+	layer = BatchNormalization()(layer)
+	layer = Activation('relu')(layer)
+	
+	layer = Flatten()(layer)
+	layer_densenet = Dense(32, activation = 'relu')(layer)
+
+	# add resnet layer
+	layer = Conv1D(filters = 32, kernel_size = 32, strides = 1, padding = 'same', kernel_initializer = 'he_normal')(inputs)
 	layer = BatchNormalization()(layer)
 	layer = Activation('relu')(layer)
 	
@@ -216,11 +253,10 @@ def build_model():
 	layer_gender = Flatten()(layer_gender)
 	
 	# Concat all layers
-	layer = keras.layers.concatenate([layer, layer_age, layer_gender])
+	layer = keras.layers.concatenate([layer_densenet, layer, layer_age, layer_gender])
 
 	# add output layer
 	layer = Dense(32, activation = 'relu', kernel_regularizer = regularizers.l2(0.01))(layer) 
-	#layer = Dropout(0.1)(layer)
 	outputs = Dense(55, activation = 'sigmoid')(layer)
 	
 	model = Model(inputs = [inputs, inputs_age, inputs_gender], outputs = [outputs])
@@ -248,19 +284,21 @@ def train():
 	print("load data : {}".format(end - start))
 	X_train, X_dev, X_age_train, X_age_dev, X_gender_train, X_gender_dev, y_train, y_dev = train_test_split(X, X_age, X_gender, y, test_size = 0.15)
 	#X_train, X_dev, X_age_train, X_age_dev, X_gender_train, X_gender_dev, y_train, y_dev = train_test_split(X, X_age, X_gender, y, test_size = 0.33, random_state = 31)
+	
 	model = build_model()
 	stopping = keras.callbacks.EarlyStopping(patience = 8)
 	reduce_lr = keras.callbacks.ReduceLROnPlateau(factor = 0.1, patience = 2, min_lr = 0.001 * 0.001)
 	checkpointer = keras.callbacks.ModelCheckpoint(
-		filepath=os.path.join(MODEL_SAVE_PATH, 'ecg.model'),
+		filepath="/New_User/julyedu_471425/pickle/model/ecg.model",
 		save_best_only=False)
 	
-	hist = model.fit([X_train, X_age_train, X_gender_train], y_train, batch_size = 32, epochs = 50, 
+	hist = model.fit([X_train, X_age_train, X_gender_train], y_train, batch_size = 32, epochs = 50, shuffle = True, 
 				 validation_data = [[X_dev, X_age_dev, X_gender_dev], y_dev], callbacks = [reduce_lr, stopping, checkpointer])
 	
 	print("training model finished!")
 	end = time.time()	
 	print("train model : {}".format(end - start))
+
 
 def main():
 	train()
