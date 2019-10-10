@@ -282,7 +282,7 @@ def train():
 	print(X.shape, X_age.shape, X_gender.shape, y.shape)
 	end = time.time()
 	print("load data : {}".format(end - start))
-	X_train, X_dev, X_age_train, X_age_dev, X_gender_train, X_gender_dev, y_train, y_dev = train_test_split(X, X_age, X_gender, y, test_size = 0.15)
+	X_train, X_dev, X_age_train, X_age_dev, X_gender_train, X_gender_dev, y_train, y_dev = train_test_split(X, X_age, X_gender, y, test_size = 0.05)
 	#X_train, X_dev, X_age_train, X_age_dev, X_gender_train, X_gender_dev, y_train, y_dev = train_test_split(X, X_age, X_gender, y, test_size = 0.33, random_state = 31)
 	
 	model = build_model()
