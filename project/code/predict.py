@@ -8,7 +8,7 @@ import pandas as pd
 
 ARRYTHMIA_FILE_PATH = "../data/hf_round1_arrythmia.txt"
 LABEL_FILE_PATH_TEST_B = "../data/hf_round1_subB_noDup_rename.txt" 
-ECG_FILE_PATH_TEST_B = "../data/testB_noDup_rename"
+ECG_FILE_PATH_TEST_B = "../data/hf_round1_testB_noDup_rename"
 MODEL_SAVE_PATH = '../user_data/'
 RESULT_SAVE_PATH = '../prediction_result/'
 
