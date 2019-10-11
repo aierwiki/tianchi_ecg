@@ -15,11 +15,11 @@ import os
 
 ARRYTHMIA_FILE_PATH = "../data/hf_round1_arrythmia.txt"
 LABEL_FILE_PATH = "../data/hf_round1_label.txt"
-ECG_FILE_PATH = "../data/train"
+ECG_FILE_PATH = "../data/hf_round1_train"
 LABEL_FILE_PATH_TEST_A = "../data/hefei_round1_ansA_20191008.txt" 
-ECG_FILE_PATH_TEST_A = "../data/testA"
+ECG_FILE_PATH_TEST_A = "../data/hf_round1_testA"
 LABEL_FILE_PATH_TEST_B = "../data/hf_round1_subB_noDup_rename.txt" 
-ECG_FILE_PATH_TEST_B = "../data/testB_noDup_rename"
+ECG_FILE_PATH_TEST_B = "../data/hf_round1_testB_noDup_rename"
 MODEL_SAVE_PATH = '../user_data/'
 
 
